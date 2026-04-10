@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Chat Pizza</title>
+<title>QueroPizza 🍕</title>
 
 <style>
 body{
@@ -27,13 +27,14 @@ body{
   border-radius:50%;
 }
 
-.nome{ font-weight:bold; }
-.status{ font-size:12px; opacity:0.8; }
+.status{
+  font-size:12px;
+}
 
 /* CHAT */
 #mensagens{
   padding:10px;
-  margin-bottom:120px;
+  margin-bottom:140px;
 }
 
 .msg{
@@ -44,34 +45,25 @@ body{
   max-width:80%;
 }
 
+.bot{ background:#e1ffc7; }
 .user{
   background:#d1e7ff;
   margin-left:auto;
 }
 
-.bot{
-  background:#e1ffc7;
+/* BOTÕES */
+.botoes{
+  margin-top:5px;
 }
 
-/* INPUT */
-.inputArea{
-  position:fixed;
-  bottom:60px;
-  width:100%;
-  display:flex;
-}
-
-input{
-  flex:1;
-  padding:10px;
+.botoes button{
+  margin:3px;
+  padding:8px;
   border:none;
-}
-
-button{
-  padding:10px;
-  border:none;
+  border-radius:5px;
   background:#d32f2f;
   color:white;
+  cursor:pointer;
 }
 
 /* CARRINHO */
@@ -79,215 +71,200 @@ button{
   position:fixed;
   bottom:0;
   width:100%;
-  background:#fff;
+  background:white;
   border-top:2px solid #ccc;
   padding:10px;
-  font-size:14px;
 }
 </style>
-
 </head>
+
 <body>
 
-<!-- TOPO -->
 <div class="topo">
   <img src="logo.png" class="logo">
   <div>
-    <div class="nome">QueroPizza 🍕</div>
-    <div class="status" id="status">🟢 Online</div>
+    <b>QueroPizza 🍕</b><br>
+    <span id="status">🟢 Online</span>
   </div>
 </div>
 
-<!-- CHAT -->
 <div id="mensagens"></div>
-
-<!-- INPUT -->
-<div class="inputArea">
-  <input id="input" placeholder="Digite aqui...">
-  <button onclick="enviar()">Enviar</button>
-</div>
-
-<!-- CARRINHO -->
 <div class="carrinho" id="carrinho"></div>
 
 <script>
 
 let etapa = 0;
 
-/* 🔥 NOVO: OBJETO DO PEDIDO */
 let pedido = {
-  nome: "",
-  pizzas: [],
-  bebida: "",
-  total: 0
+  pizzas:[],
+  bebida:"",
+  total:0,
+  qtd:0,
+  contador:1
 };
 
 /* MENSAGEM */
-function addMsg(texto, classe="bot"){
-  let div = document.createElement("div");
-  div.className = "msg " + classe;
-  div.innerHTML = texto;
-  document.getElementById("mensagens").appendChild(div);
-  scroll();
+function msgBot(texto, botoes=[]){
+
+let div = document.createElement("div");
+div.className="msg bot";
+
+let html = texto;
+
+if(botoes.length){
+  html += "<div class='botoes'>";
+  botoes.forEach(b=>{
+    html += `<button onclick="${b.onclick}">${b.texto}</button>`;
+  });
+  html += "</div>";
 }
 
+div.innerHTML = html;
+document.getElementById("mensagens").appendChild(div);
+scroll();
+}
+
+/* USER */
+function msgUser(texto){
+let div = document.createElement("div");
+div.className="msg user";
+div.innerHTML = texto;
+document.getElementById("mensagens").appendChild(div);
+scroll();
+}
+
+/* SCROLL */
 function scroll(){
-  window.scrollTo(0,document.body.scrollHeight);
+window.scrollTo(0,document.body.scrollHeight);
 }
 
-/* 🔥 NOVO: STATUS DIGITANDO */
-function botDigitando(callback){
-  let status = document.getElementById("status");
-  status.innerHTML = "⌨️ Digitando...";
-
-  setTimeout(()=>{
-    status.innerHTML = "🟢 Online";
-    callback();
-  },1500);
+/* DIGITANDO */
+function digitando(callback){
+let s = document.getElementById("status");
+s.innerHTML="⌨️ Digitando...";
+setTimeout(()=>{
+  s.innerHTML="🟢 Online";
+  callback();
+},1200);
 }
 
-/* 🔥 NOVO: ATUALIZA CARRINHO */
+/* CARRINHO */
 function atualizarCarrinho(){
 
-let html = "<b>🧾 Seu pedido:</b><br>";
+let html="<b>🧾 Pedido:</b><br>";
 
 pedido.pizzas.forEach((p,i)=>{
-  html += `🍕 Pizza ${i+1}: ${p}<br>`;
+  html+=`🍕 ${p}<br>`;
 });
 
 if(pedido.bebida){
-  html += `🥤 ${pedido.bebida}<br>`;
+  html+=`🥤 ${pedido.bebida}<br>`;
 }
 
-html += `<br><b>Total: R$ ${pedido.total}</b>`;
+html+=`<br><b>Total: R$ ${pedido.total}</b>`;
 
-document.getElementById("carrinho").innerHTML = html;
-}
-
-/* ENVIAR */
-function enviar(){
-
-let input = document.getElementById("input");
-let texto = input.value;
-
-if(!texto) return;
-
-addMsg(texto,"user");
-input.value = "";
-
-/* FLUXO ORIGINAL + ADAPTAÇÃO */
-
-if(etapa == 0){
-  pedido.nome = texto;
-
-  botDigitando(()=>{
-    addMsg("Quantas pizzas você quer?");
-  });
-
-  etapa = 1;
-}
-
-/* QUANTIDADE */
-else if(etapa == 1){
-
-  let qtd = parseInt(texto);
-
-  if(isNaN(qtd) || qtd <= 0){
-    addMsg("Digite um número válido.");
-    return;
-  }
-
-  pedido.qtd = qtd;
-  pedido.contador = 1;
-
-  botDigitando(()=>{
-    addMsg("Escolha o sabor da pizza 1");
-  });
-
-  etapa = 2;
-}
-
-/* SABORES */
-else if(etapa == 2){
-
-  pedido.pizzas.push(texto);
-  pedido.total += 30;
-
-  atualizarCarrinho();
-
-  if(pedido.contador < pedido.qtd){
-    pedido.contador++;
-
-    botDigitando(()=>{
-      addMsg("Escolha o sabor da pizza " + pedido.contador);
-    });
-
-  } else {
-
-    botDigitando(()=>{
-      addMsg("Deseja bebida? (Digite o nome ou 'não')");
-    });
-
-    etapa = 3;
-  }
-}
-
-/* BEBIDA */
-else if(etapa == 3){
-
-  if(texto.toLowerCase() != "não"){
-    pedido.bebida = texto;
-    pedido.total += 8;
-  }
-
-  atualizarCarrinho();
-
-  botDigitando(()=>{
-    addMsg(`
-    <b>Confirma seu pedido?</b><br><br>
-    Nome: ${pedido.nome}<br>
-    Total: R$ ${pedido.total}<br><br>
-    Digite "sim" para finalizar
-    `);
-  });
-
-  etapa = 4;
-}
-
-/* FINAL */
-else if(etapa == 4){
-
-  if(texto.toLowerCase() == "sim"){
-
-    let msg = `Olá, quero pedir:%0A
-Nome: ${pedido.nome}%0A`;
-
-    pedido.pizzas.forEach((p,i)=>{
-      msg += `Pizza ${i+1}: ${p}%0A`;
-    });
-
-    if(pedido.bebida){
-      msg += `Bebida: ${pedido.bebida}%0A`;
-    }
-
-    msg += `Total: R$ ${pedido.total}`;
-
-    window.open(`https://wa.me/5588999999999?text=${msg}`);
-
-  } else {
-    addMsg("Pedido cancelado.");
-  }
-}
-
+document.getElementById("carrinho").innerHTML=html;
 }
 
 /* INÍCIO */
-window.onload = function(){
+window.onload = ()=>{
+digitando(()=>{
+  msgBot("Olá! 👋 Bem-vindo! Quantas pizzas você quer?",[
+    {texto:"1 pizza", onclick:"qtdPizza(1)"},
+    {texto:"2 pizzas", onclick:"qtdPizza(2)"},
+    {texto:"3 pizzas", onclick:"qtdPizza(3)"}
+  ]);
+});
+};
 
-  botDigitando(()=>{
-    addMsg("Olá! 👋 Bem-vindo à QueroPizza 🍕<br><br>Qual seu nome?");
-  });
+/* QUANTIDADE */
+function qtdPizza(qtd){
+msgUser(qtd+" pizza(s)");
+pedido.qtd=qtd;
+pedido.contador=1;
 
+digitando(()=>{
+  escolherSabor();
+});
+}
+
+/* SABORES */
+function escolherSabor(){
+
+msgBot(`Escolha o sabor da pizza ${pedido.contador}`,[
+  {texto:"Calabresa", onclick:"addSabor('Calabresa')"},
+  {texto:"Frango", onclick:"addSabor('Frango')"},
+  {texto:"Portuguesa", onclick:"addSabor('Portuguesa')"},
+  {texto:"Mussarela", onclick:"addSabor('Mussarela')"}
+]);
+
+}
+
+/* ADD SABOR */
+function addSabor(sabor){
+
+msgUser(sabor);
+pedido.pizzas.push(sabor);
+pedido.total+=30;
+
+atualizarCarrinho();
+
+if(pedido.contador < pedido.qtd){
+  pedido.contador++;
+  digitando(()=> escolherSabor());
+}else{
+  digitando(()=> escolherBebida());
+}
+
+}
+
+/* BEBIDA */
+function escolherBebida(){
+
+msgBot("Deseja bebida?",[
+  {texto:"Coca-Cola", onclick:"addBebida('Coca-Cola')"},
+  {texto:"Guaraná", onclick:"addBebida('Guaraná')"},
+  {texto:"Não quero", onclick:"finalizar()"}
+]);
+
+}
+
+function addBebida(b){
+msgUser(b);
+pedido.bebida=b;
+pedido.total+=8;
+
+atualizarCarrinho();
+
+finalizar();
+}
+
+/* FINAL */
+function finalizar(){
+
+digitando(()=>{
+  msgBot(`Confirmar pedido?<br><br>Total: R$ ${pedido.total}`,[
+    {texto:"Confirmar ✅", onclick:"enviarWhats()"}
+  ]);
+});
+
+}
+
+function enviarWhats(){
+
+let msg="Pedido:%0A";
+
+pedido.pizzas.forEach((p,i)=>{
+  msg+=`Pizza ${i+1}: ${p}%0A`;
+});
+
+if(pedido.bebida){
+  msg+=`Bebida: ${pedido.bebida}%0A`;
+}
+
+msg+=`Total: R$ ${pedido.total}`;
+
+window.open(`https://wa.me/5588999999999?text=${msg}`);
 }
 
 </script>
