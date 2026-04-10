@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Pizzaria</title>
+
+<style>
+
+html, body{
+height:100%;
+margin:0;
+font-family:Arial;
+background:#fff3cd;
+}
+
+#chat{
+max-width:600px;
+margin:auto;
+background:white;
+height:100vh;
+display:flex;
+flex-direction:column;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.2);
+overflow:hidden;
+}
+
+#mensagens{
+flex:1;
+padding:15px;
+overflow-y:auto;
+}
+
+.msg{
+margin:10px 0;
+padding:10px;
+border-radius:10px;
+max-width:80%;
+}
+
+.bot{
+background:#f1f1f1;
+}
+
+.user{
+background:#25D366;
+color:white;
+margin-left:auto;
+}
+
+#inputArea{
+display:flex;
+border-top:1px solid #ccc;
+}
+
+#inputUser{
+flex:1;
+padding:10px;
+border:none;
+font-size:16px;
+}
+
+button{
+padding:10px;
+background:#25D366;
+color:white;
+border:none;
+cursor:pointer;
+}
+
+.opcoes button{
+display:block;
+margin-top:5px;
+width:100%;
+background:#eee;
+color:black;
+}
+
+.typing{
+font-style:italic;
+opacity:0.6;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="chat">
+
+<div id="mensagens"></div>
+
+<div id="inputArea">
+<input type="text" id="inputUser" placeholder="Digite algo..." onkeypress="if(event.key==='Enter'){responder()}">
+<button onclick="responder()">Enviar</button>
+</div>
+
+</div>
+
+<script>
+
+let etapa = 0;
+
+let pedido = {
+nome:"",
+endereco:"",
+quantidade:1,
+pizza1:"",
+pizza2:"",
+refri:"",
+pagamento:"",
+troco:"",
+total:0
+};
+
+const precoPizza = 24.90;
+
+function delayTempo(texto){
+return 800 + (texto.length * 20);
+}
+
+function botDigitando(callback, texto){
+
+let typing = document.createElement("div");
+typing.className = "msg bot typing";
+typing.innerText = "digitando...";
+document.getElementById("mensagens").appendChild(typing);
+scroll();
+
+setTimeout(()=>{
+typing.remove();
+callback();
+}, delayTempo(texto));
+
+}
+
+function addMsg(texto, tipo="bot"){
+let div = document.createElement("div");
+div.className = "msg "+tipo;
+div.innerHTML = texto;
+document.getElementById("mensagens").appendChild(div);
+scroll();
+}
+
+function addOpcoes(lista){
+let div = document.createElement("div");
+div.className="opcoes";
+
+lista.forEach(op=>{
+let btn = document.createElement("button");
+btn.innerText = op;
+btn.onclick = ()=>selecionar(op);
+div.appendChild(btn);
+});
+
+document.getElementById("mensagens").appendChild(div);
+scroll();
+}
+
+function scroll(){
+let m = document.getElementById("mensagens");
+m.scrollTop = m.scrollHeight;
+}
+
+function responder(){
+let input = document.getElementById("inputUser");
+let texto = input.value;
+
+if(texto==="") return;
+
+addMsg(texto,"user");
+input.value="";
+
+fluxo(texto);
+}
+
+function selecionar(valor){
+addMsg(valor,"user");
+fluxo(valor);
+}
+
+function fluxo(resposta){
+
+if(etapa===0){
+botDigitando(()=>{
+addMsg("🍕 Olá! Vamos montar seu pedido.<br>Qual seu nome?");
+}, "Olá");
+etapa=1;
+return;
+}
+
+if(etapa===1){
+pedido.nome = resposta;
+botDigitando(()=>{
+addMsg("Qual seu endereço?");
+}, "endereco");
+etapa=2;
+return;
+}
+
+if(etapa===2){
+pedido.endereco = resposta;
+botDigitando(()=>{
+addMsg("Quantas pizzas?");
+addOpcoes(["1","2","3","4"]);
+}, "quantidade");
+etapa=3;
+return;
+}
+
+if(etapa===3){
+pedido.quantidade = parseInt(resposta);
+botDigitando(()=>{
+addMsg("Escolha o sabor 1:");
+addOpcoes(["Calabresa","Margherita","Quatro Queijos","Frango com Catupiry","Portuguesa","Pepperoni"]);
+}, "sabores");
+etapa=4;
+return;
+}
+
+if(etapa===4){
+pedido.pizza1 = resposta;
+botDigitando(()=>{
+addMsg("Escolha o sabor 2:");
+addOpcoes(["Calabresa","Margherita","Quatro Queijos","Frango com Catupiry","Portuguesa","Pepperoni"]);
+}, "sabores");
+etapa=5;
+return;
+}
+
+if(etapa===5){
+pedido.pizza2 = resposta;
+botDigitando(()=>{
+addMsg("Deseja refrigerante?");
+addOpcoes(["Sem refrigerante","1L - R$10","2L - R$15"]);
+}, "refri");
+etapa=6;
+return;
+}
+
+if(etapa===6){
+pedido.refri = resposta;
+
+botDigitando(()=>{
+addMsg("Forma de pagamento?");
+addOpcoes(["Pix","Cartão","Dinheiro"]);
+}, "pagamento");
+
+etapa=7;
+return;
+}
+
+if(etapa===7){
+pedido.pagamento = resposta;
+
+if(resposta==="Dinheiro"){
+botDigitando(()=>{
+addMsg("Troco para quanto?");
+}, "troco");
+etapa=8;
+}else{
+finalizar();
+}
+return;
+}
+
+if(etapa===8){
+pedido.troco = resposta;
+finalizar();
+}
+
+}
+
+function finalizar(){
+
+let valorRefri = 0;
+
+if(pedido.refri.includes("10")) valorRefri=10;
+if(pedido.refri.includes("15")) valorRefri=15;
+
+let total = (pedido.quantidade * precoPizza) + valorRefri;
+pedido.total = total.toFixed(2);
+
+botDigitando(()=>{
+
+addMsg("✅ Pedido pronto!<br>Total: R$ "+pedido.total);
+
+let msg = "🍕 *NOVO PEDIDO* %0A%0A";
+msg += "*Cliente:* "+pedido.nome+"%0A";
+msg += "*Endereço:* "+pedido.endereco+"%0A";
+msg += "*Qtd:* "+pedido.quantidade+"%0A";
+msg += "*Pizza:* "+pedido.pizza1+" / "+pedido.pizza2+"%0A";
+msg += "*Refri:* "+pedido.refri+"%0A";
+msg += "*Pagamento:* "+pedido.pagamento+"%0A";
+
+if(pedido.pagamento==="Dinheiro"){
+msg += "*Troco:* "+pedido.troco+"%0A";
+}
+
+msg += "*Total:* R$ "+pedido.total;
+
+let telefone = "5588993082035";
+
+addMsg('<button onclick="window.open(`https://wa.me/'+telefone+'?text='+msg+'`)">Enviar para WhatsApp</button>');
+
+}, "finalizando");
+
+etapa=0;
+
+}
+
+</script>
+
+</body>
+</html>
