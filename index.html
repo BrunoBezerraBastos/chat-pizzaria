@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chat Pizzaria</title>
+<title>QueroPizza</title>
 
 <style>
 
@@ -82,6 +82,10 @@ font-style:italic;
 opacity:0.6;
 }
 
+.msg img{
+object-fit:cover;
+}
+
 </style>
 </head>
 
@@ -135,6 +139,25 @@ callback();
 }, delayTempo(texto));
 }
 
+// 🔥 MENSAGEM COM FOTO (LOGO)
+function addMsgComFoto(texto){
+let div = document.createElement("div");
+div.className = "msg bot";
+
+div.innerHTML = `
+<div style="display:flex; align-items:flex-start; gap:10px;">
+<img src="logo.png" style="width:40px; height:40px; border-radius:50%;">
+<div>
+<b>QueroPizza 🍕</b><br>
+${texto}
+</div>
+</div>
+`;
+
+document.getElementById("mensagens").appendChild(div);
+scroll();
+}
+
 function addMsg(texto, tipo="bot"){
 let div = document.createElement("div");
 div.className = "msg "+tipo;
@@ -182,18 +205,10 @@ fluxo(valor);
 
 function fluxo(resposta){
 
-if(etapa===0){
-botDigitando(()=>{
-addMsg("🍕 Olá! Vamos montar seu pedido.<br>Qual seu nome?");
-}, "Olá");
-etapa=1;
-return;
-}
-
 if(etapa===1){
 pedido.nome = resposta;
 botDigitando(()=>{
-addMsg("Qual seu endereço?");
+addMsgComFoto("Qual seu endereço?");
 }, "endereco");
 etapa=2;
 return;
@@ -202,7 +217,7 @@ return;
 if(etapa===2){
 pedido.endereco = resposta;
 botDigitando(()=>{
-addMsg("Quantas pizzas?");
+addMsgComFoto("Quantas pizzas?");
 addOpcoes(["1","2","3","4"]);
 }, "quantidade");
 etapa=3;
@@ -216,7 +231,7 @@ pizzaAtual = 1;
 saborAtual = 1;
 
 botDigitando(()=>{
-addMsg("Escolha o sabor 1 da pizza "+pizzaAtual+":");
+addMsgComFoto("Escolha o sabor 1 da pizza "+pizzaAtual+":");
 addOpcoes(listaSabores());
 }, "sabores");
 
@@ -234,27 +249,25 @@ sabor:resposta
 if(saborAtual===1){
 saborAtual=2;
 botDigitando(()=>{
-addMsg("Escolha o sabor 2 da pizza "+pizzaAtual+":");
+addMsgComFoto("Escolha o sabor 2 da pizza "+pizzaAtual+":");
 addOpcoes(listaSabores());
 }, "sabores");
 return;
 }
 
-// terminou os 2 sabores da pizza
 saborAtual=1;
 
 if(pizzaAtual < pedido.quantidade){
 pizzaAtual++;
 botDigitando(()=>{
-addMsg("Agora vamos para a pizza "+pizzaAtual+" 🍕<br>Escolha o sabor 1:");
+addMsgComFoto("Agora vamos para a pizza "+pizzaAtual+" 🍕<br>Escolha o sabor 1:");
 addOpcoes(listaSabores());
 }, "proxima pizza");
 return;
 }
 
-// terminou todas pizzas
 botDigitando(()=>{
-addMsg("Deseja refrigerante?");
+addMsgComFoto("Deseja refrigerante?");
 addOpcoes(["Sem refrigerante","1L - R$10","2L - R$15"]);
 }, "refri");
 
@@ -266,7 +279,7 @@ if(etapa===6){
 pedido.refri = resposta;
 
 botDigitando(()=>{
-addMsg("Forma de pagamento?");
+addMsgComFoto("Forma de pagamento?");
 addOpcoes(["Pix","Cartão","Dinheiro"]);
 }, "pagamento");
 
@@ -279,7 +292,7 @@ pedido.pagamento = resposta;
 
 if(resposta==="Dinheiro"){
 botDigitando(()=>{
-addMsg("Troco para quanto?");
+addMsgComFoto("Troco para quanto?");
 }, "troco");
 etapa=8;
 }else{
@@ -300,7 +313,7 @@ if(resposta.includes("Confirmar")){
 finalizar();
 }else{
 botDigitando(()=>{
-addMsg("Sem problemas! Vamos começar novamente 😊<br>Qual seu nome?");
+addMsgComFoto("Sem problemas! Vamos começar novamente 😊<br>Qual seu nome?");
 }, "reiniciar");
 
 etapa=1;
@@ -344,7 +357,7 @@ resumo += "💰 Troco: "+pedido.troco+"<br>";
 }
 
 botDigitando(()=>{
-addMsg(resumo);
+addMsgComFoto(resumo);
 addOpcoes(["✅ Confirmar Pedido","❌ Alterar Pedido"]);
 }, "confirmacao");
 
@@ -363,7 +376,7 @@ pedido.total = total.toFixed(2);
 
 botDigitando(()=>{
 
-addMsg("✅ Pedido confirmado!<br>Total: R$ "+pedido.total);
+addMsgComFoto("✅ Pedido confirmado!<br>Total: R$ "+pedido.total);
 
 let msg = "🍕 *NOVO PEDIDO* %0A%0A";
 msg += "*Cliente:* "+pedido.nome+"%0A";
@@ -396,9 +409,23 @@ etapa=0;
 
 }
 
+// 🚀 INÍCIO AUTOMÁTICO
+window.onload = function(){
+
+botDigitando(()=>{
+addMsgComFoto(`
+Olá! 👋 Seja bem-vindo à <b>QueroPizza</b> 🍕<br><br>
+🚀 Atendimento rápido e prático<br>
+🔥 Pizzas deliciosas saindo agora<br><br>
+Me diga seu nome para começarmos seu pedido!
+`);
+}, "inicio");
+
+etapa = 1;
+
+}
+
 </script>
 
-</body>
-</html>
 </body>
 </html>
