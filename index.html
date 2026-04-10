@@ -106,13 +106,15 @@ let pedido = {
 nome:"",
 endereco:"",
 quantidade:1,
-pizza1:"",
-pizza2:"",
+sabores:[],
 refri:"",
 pagamento:"",
 troco:"",
 total:0
 };
+
+let pizzaAtual = 1;
+let saborAtual = 1;
 
 const precoPizza = 24.90;
 
@@ -121,7 +123,6 @@ return 800 + (texto.length * 20);
 }
 
 function botDigitando(callback, texto){
-
 let typing = document.createElement("div");
 typing.className = "msg bot typing";
 typing.innerText = "digitando...";
@@ -132,7 +133,6 @@ setTimeout(()=>{
 typing.remove();
 callback();
 }, delayTempo(texto));
-
 }
 
 function addMsg(texto, tipo="bot"){
@@ -211,30 +211,53 @@ return;
 
 if(etapa===3){
 pedido.quantidade = parseInt(resposta);
+pedido.sabores = [];
+pizzaAtual = 1;
+saborAtual = 1;
+
 botDigitando(()=>{
-addMsg("Escolha o sabor 1:");
-addOpcoes(["Calabresa","Margherita","Quatro Queijos","Frango com Catupiry","Portuguesa","Pepperoni"]);
+addMsg("Escolha o sabor 1 da pizza "+pizzaAtual+":");
+addOpcoes(listaSabores());
 }, "sabores");
+
 etapa=4;
 return;
 }
 
 if(etapa===4){
-pedido.pizza1 = resposta;
+
+pedido.sabores.push({
+pizza:pizzaAtual,
+sabor:resposta
+});
+
+if(saborAtual===1){
+saborAtual=2;
 botDigitando(()=>{
-addMsg("Escolha o sabor 2:");
-addOpcoes(["Calabresa","Margherita","Quatro Queijos","Frango com Catupiry","Portuguesa","Pepperoni"]);
+addMsg("Escolha o sabor 2 da pizza "+pizzaAtual+":");
+addOpcoes(listaSabores());
 }, "sabores");
-etapa=5;
 return;
 }
 
-if(etapa===5){
-pedido.pizza2 = resposta;
+// terminou os 2 sabores da pizza
+saborAtual=1;
+
+if(pizzaAtual < pedido.quantidade){
+pizzaAtual++;
+botDigitando(()=>{
+addMsg("Agora vamos para a pizza "+pizzaAtual+" 🍕<br>Escolha o sabor 1:");
+addOpcoes(listaSabores());
+}, "proxima pizza");
+return;
+}
+
+// terminou todas pizzas
 botDigitando(()=>{
 addMsg("Deseja refrigerante?");
 addOpcoes(["Sem refrigerante","1L - R$10","2L - R$15"]);
 }, "refri");
+
 etapa=6;
 return;
 }
@@ -288,13 +311,31 @@ return;
 
 }
 
+function listaSabores(){
+return ["Calabresa","Margherita","Quatro Queijos","Frango com Catupiry","Portuguesa","Pepperoni"];
+}
+
+function montarResumoSabores(){
+
+let texto = "";
+
+for(let i=1; i<=pedido.quantidade; i++){
+let saboresPizza = pedido.sabores
+.filter(s => s.pizza === i)
+.map(s => s.sabor);
+
+texto += "🍕 Pizza "+i+": "+saboresPizza.join(" / ")+"<br>";
+}
+
+return texto;
+}
+
 function confirmarPedido(){
 
 let resumo = "📋 <b>Confirme seu pedido:</b><br><br>";
 resumo += "👤 "+pedido.nome+"<br>";
 resumo += "📍 "+pedido.endereco+"<br>";
-resumo += "🍕 "+pedido.quantidade+" pizza(s)<br>";
-resumo += "Sabores: "+pedido.pizza1+" / "+pedido.pizza2+"<br>";
+resumo += montarResumoSabores();
 resumo += "🥤 "+pedido.refri+"<br>";
 resumo += "💳 "+pedido.pagamento+"<br>";
 
@@ -308,7 +349,6 @@ addOpcoes(["✅ Confirmar Pedido","❌ Alterar Pedido"]);
 }, "confirmacao");
 
 etapa=9;
-
 }
 
 function finalizar(){
@@ -328,8 +368,15 @@ addMsg("✅ Pedido confirmado!<br>Total: R$ "+pedido.total);
 let msg = "🍕 *NOVO PEDIDO* %0A%0A";
 msg += "*Cliente:* "+pedido.nome+"%0A";
 msg += "*Endereço:* "+pedido.endereco+"%0A";
-msg += "*Qtd:* "+pedido.quantidade+"%0A";
-msg += "*Pizza:* "+pedido.pizza1+" / "+pedido.pizza2+"%0A";
+
+for(let i=1; i<=pedido.quantidade; i++){
+let saboresPizza = pedido.sabores
+.filter(s => s.pizza === i)
+.map(s => s.sabor);
+
+msg += "*Pizza "+i+":* "+saboresPizza.join(" / ")+"%0A";
+}
+
 msg += "*Refri:* "+pedido.refri+"%0A";
 msg += "*Pagamento:* "+pedido.pagamento+"%0A";
 
@@ -353,6 +400,5 @@ etapa=0;
 
 </body>
 </html>
-
 </body>
 </html>
